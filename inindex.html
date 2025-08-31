@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星際危機：月球救援行動</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 2.5em;
+            color: #00ffff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .story-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border-left: 5px solid #ff6b35;
+        }
+
+        .story-text {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .character {
+            display: inline-block;
+            font-weight: bold;
+            color: #ffd700;
+            margin-right: 10px;
+        }
+
+        .mission-status {
+            background: rgba(255, 107, 53, 0.2);
+            border: 1px solid #ff6b35;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .quiz-section {
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border-left: 5px solid #00ffff;
+        }
+
+        .question {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #00ffff;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #666;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+        }
+
+        .option:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            transform: translateY(-2px);
+        }
+
+        .option.selected {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+        }
+
+        .option.correct {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: #00ff00;
+        }
+
+        .option.incorrect {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #ff0000;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b35, #ffd700);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #00ffff, #ff6b35);
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 20px;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 107, 53, 0.8);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 20;
+            border: 2px solid #ff6b35;
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="timer" id="timer">時間：20:00</div>
+
+    <div class="game-container">
+        <h1 class="title">星際危機：月球救援行動</h1>
+
+        <!-- 故事介紹 -->
+        <div class="story-section" id="intro">
+            <div class="story-text">
+                <p><span class="character">指揮官凱拉：</span>「注意！所有人員立即進入緊急狀態。我們的月球補給任務遇到了嚴重問題。」</p>
+                <br>
+                <p>西元2087年，地球太空總部正執行關鍵的月球基地補給任務。載有生命維持系統和食物的貨運火箭「希望號」已經發射，但就在此時...</p>
+                <br>
+                <p><span class="character">雷達操作員澤克：</span>「長官！偵測到不明小行星帶正在亂入火箭的預定軌道！如果不立即調整路線，希望號將會撞毀！」</p>
+                <br>
+                <p><span class="character">指揮官凱拉：</span>「月球基地的200名太空人正等待這批補給，我們絕不能失敗。啟動緊急協議，計算新的軌道路線！」</p>
+            </div>
+            
+            <div class="mission-status">
+                <h3>🚀 任務狀況</h3>
+                <p>• 希望號火箭：已發射，面臨撞擊危險</p>
+                <p>• 月球基地：200名太空人等待補給</p>
+                <p>• 小行星帶：預估20分鐘後與火箭軌道交會</p>
+                <p>• 你的任務：破解9道題目，獲得安全軌道解決方案</p>
+            </div>
+
+            <button class="btn" onclick="showGameRules()">開始救援任務</button>
+        </div>
+
+        <!-- 遊戲規則說明 -->
+        <div class="story-section hidden" id="gameRules">
+            <h2 style="color: #ffd700; margin-bottom: 20px;">🎯 救援任務機制</h2>
+            <div class="story-text">
+                <p><span class="character">指揮官凱拉：</span>「聽好了，這次救援任務的規則如下：」</p>
+                <br>
+                <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                    <p><strong>⏰ 時間限制：</strong>20分鐘倒數計時</p>
+                    <p><strong>📝 挑戰題目：</strong>總共9道跨領域知識題</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;• 2題科學（太空物理與火箭技術）</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;• 2題歷史（太空探索發展史）</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;• 2題公民（國際太空合作）</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;• 2題地理（太空地理與發射場地）</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;• 1題數學（軌道計算與密碼解鎖）</p>
+                    <p><strong>⚠️ 失敗條件：</strong>答錯任何一題或時間耗盡</p>
+                    <p><strong>🏆 勝利條件：</strong>全部答對，獲得安全軌道方案</p>
+                </div>
+                <br>
+                <p><span class="character">澽克：</span>「記住，每道題目都與我們的太空救援任務相關。你準備好接受挑戰了嗎？」</p>
+            </div>
+            
+            <div class="mission-status">
+                <h3>⚡ 緊急提醒</h3>
+                <p>小行星帶正在逼近！每分每秒都很珍貴！</p>
+                <p>月球基地的太空人們正在等待你的救援！</p>
+            </div>
+            
+            <button class="btn" onclick="startGame()">我準備好了，開始挑戰！</button>
+        </div>
+
+        <!-- 問答部分 -->
+        <div class="quiz-section hidden" id="quiz">
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            <p>題目 <span id="currentQ">1</span> / 9</p>
+            
+            <div class="question" id="question"></div>
+            
+            <div class="options" id="options"></div>
+            
+            <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">下一題</button>
+        </div>
+
+        <!-- 太空使者的信 -->
+        <div class="story-section hidden" id="spaceLetter">
+            <h2 style="color: #ffd700; margin-bottom: 20px;">📨 來自太空使者的信</h2>
+            <div class="story-text" style="background: rgba(0,255,255,0.1); padding: 25px; border-radius: 15px; border-left: 5px solid #00ffff;">
+                <div id="letterContent">
+                    <!-- 信件內容將在這裡顯示 -->
+                </div>
+            </div>
+            <button class="btn" onclick="restartGame()">重新開始任務</button>
+        </div>
+
+        <!-- 成功結局 -->
+        <div class="success-message hidden" id="success">
+            <h2>🎉 任務成功！</h2>
+            <div class="story-text">
+                <p><span class="character">指揮官凱拉：</span>「太好了！新軌道計算完成，希望號成功避開了小行星帶！」</p>
+                <br>
+                <p><span class="character">澤克：</span>「火箭正在按照新路線前進，預計將在6小時後安全抵達月球基地。」</p>
+                <br>
+                <p><span class="character">凱拉：</span>「優秀的工作！多虧了你的快速反應和專業知識，200名太空人的生命得救了。這次危機讓我們學到，即使在太空中，團隊合作和知識仍然是我們最強大的武器。」</p>
+                <br>
+                <p>幾小時後，月球基地收到了珍貴的補給物資。太空人們安全了，而你也證明了自己是一名真正的太空英雄！</p>
+            </div>
+            <button class="btn" onclick="showSpaceLetter()">接收神秘訊息</button>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲數據
+        const questions = [
+            {
+                q: "火箭在太空中主要靠什麼原理來推進和改變方向？",
+                options: ["牛頓第三定律（作用力與反作用力）", "阿基米德浮力原理", "法拉第電磁感應", "愛因斯坦相對論"],
+                correct: 0
+            },
+            {
+                q: "太空探索任務中，為什麼需要國際間共享科學數據和技術？",
+                options: ["節省成本", "促進人類共同發展", "遵守國際法", "以上皆是"],
+                correct: 3
+            },
+            {
+                q: "人類第一次成功登月是在哪一年？這個成就對太空探索有重大意義。",
+                options: ["1967年", "1968年", "1969年", "1970年"],
+                correct: 2
+            },
+            {
+                q: "哪個國家發射了世界第一顆人造衛星「史普尼克一號」，開啟了太空時代？",
+                options: ["美國", "蘇聯", "中國", "法國"],
+                correct: 1
+            },
+            {
+                q: "國際太空站的建設體現了什麼重要的國際合作精神？",
+                options: ["軍事聯盟", "和平利用太空的國際合作", "經濟貿易協定", "文化交流活動"],
+                correct: 1
+            },
+            {
+                q: "太空中的真空環境會讓火箭燃料燃燒出現什麼狀況？",
+                options: ["無法燃燒", "燃燒更劇烈", "攜帶氧化劑可正常燃燒", "只能燃燒固體燃料"],
+                correct: 2
+            },
+            {
+                q: "火箭發射場通常設在接近哪個緯度，以利用地球自轉加速？",
+                options: ["北極圈", "赤道", "南極圈", "本初子午線"],
+                correct: 1
+            },
+            {
+                q: "月球基地選址時，最重要的地理考量因素是什麼？",
+                options: ["靠近月球正面中心", "永晝區或永夜區", "兩極地區有水冰", "月球背面隱蔽處"],
+                correct: 2
+            },
+            {
+                q: "最終時刻！希望號火箭已接近小行星帶，你必須輸入最後的軌道密碼來拯救月球基地的200名太空人。在浩瀚宇宙中，每一顆星的光芒都承載著希望。如果把你心中對未來的期望數值化：友情的溫暖是230，學習的成長是400，未來的可能是200，請計算這份希望的總和是多少？",
+                options: ["830", "840", "820", "850"],
+                correct: 0
+            }
+        ];
+
+        let currentQuestion = 0;
+        let selectedOption = -1;
+        let gameTimer;
+        let timeLeft = 20 * 60; // 20分鐘
+
+        // 初始化星空背景
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // 開始計時器
+        function startTimer() {
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('timer').textContent = 
+                    `時間：${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(gameTimer);
+                    alert('時間到！任務失敗...');
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        // 顯示遊戲規則
+        function showGameRules() {
+            document.getElementById('intro').classList.add('hidden');
+            document.getElementById('gameRules').classList.remove('hidden');
+        }
+
+        // 開始遊戲
+        function startGame() {
+            document.getElementById('gameRules').classList.add('hidden');
+            document.getElementById('quiz').classList.remove('hidden');
+            startTimer();
+            showQuestion();
+        }
+
+        // 顯示問題
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('question').textContent = q.q;
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            selectedOption = -1;
+            
+            q.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            updateProgress();
+        }
+
+        // 選擇選項
+        function selectOption(index) {
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            options[index].classList.add('selected');
+            selectedOption = index;
+            
+            // 顯示答案
+            setTimeout(() => {
+                const correct = questions[currentQuestion].correct;
+                options.forEach((opt, i) => {
+                    if (i === correct) {
+                        opt.classList.add('correct');
+                    } else if (i === selectedOption && i !== correct) {
+                        opt.classList.add('incorrect');
+                    }
+                });
+                
+                document.getElementById('nextBtn').style.display = 'inline-block';
+            }, 500);
+        }
+
+        // 下一題
+        function nextQuestion() {
+            if (selectedOption !== questions[currentQuestion].correct) {
+                alert('答案錯誤！請重新思考...');
+                location.reload();
+                return;
+            }
+            
+            currentQuestion++;
+            
+            if (currentQuestion >= questions.length) {
+                endGame();
+            } else {
+                document.getElementById('nextBtn').style.display = 'none';
+                showQuestion();
+            }
+        }
+
+        // 更新進度條
+        function updateProgress() {
+            const progress = (currentQuestion / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // 顯示太空使者的信
+        function showSpaceLetter() {
+            document.getElementById('success').classList.add('hidden');
+            document.getElementById('spaceLetter').classList.remove('hidden');
+            // 設置信件內容
+            const letterContent = `
+                <p style="text-align: right; color: #ffd700; font-style: italic; margin-bottom: 20px;">來自遙遠星系的訊息...</p>
+                <br>
+                <p><strong style="color: #00ffff;">給江品諺：</strong></p>
+                <br>
+                <p>生日快樂🎂🎈恭喜你19歲了！</p>
+                <br>
+                <p>很高興我們能夠在ymca 認識，也很意外我們聊的還不錯，之後我們每天聊天，約出門看棒球、看電影、看展覽還去了彼此的校園，我真的好開心。</p>
+                <br>
+                <p>謝謝你願意豐富我一個月的暑假，謝謝你又給我一次心動的感覺，還有那個小羽球它好可愛💛我會好好珍惜的！</p>
+                <br>
+                <p>祝福你大二身體健康 全科歐趴</p>
+                <br>
+                <p style="text-align: right; color: #00ffff; font-weight: bold; margin-top: 30px;">❤️ 洋芋</p>
+            `;
+            document.getElementById('letterContent').innerHTML = letterContent;
+        }
+
+        // 結束遊戲
+        function endGame() {
+            clearInterval(gameTimer);
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('success').classList.remove('hidden');
+        }
+
+        // 重新開始
+        function restartGame() {
+            location.reload();
+        }
+
+        // 初始化
+        createStars();
+    </script>
+</body>
+</html>
